@@ -38,7 +38,8 @@ int imu_status;
 //buttons
 // no buttons on the headset currently, but they could be used for digital IPD adjustment, position resetting, etc.
 
-struct ControllerState{
+//__attribute__((packed)) removes packing so this ends up the same as a list, and should be easier to read from Python.
+struct __attribute__((packed)) ControllerState {
   float qw,qx,qy,qz;
   float stick_x, stick_y, trigger;
   bool stick_click, sys, menu, grip, util;

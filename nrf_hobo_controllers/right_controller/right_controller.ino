@@ -34,7 +34,8 @@ MPU9250 IMU(Wire, 0x68);
 #define PIN_BUTTON_SYS 5
 #define PIN_BUTTON_MENU 6
 
-struct ControllerState{
+//__attribute__((packed)) removes packing so this ends up the same as a list, and should be easier to read from Python.
+struct __attribute__((packed)) ControllerState{
   float qw,qx,qy,qz;
   float stick_x, stick_y, trigger;
   bool stick_click, sys, menu, grip, util;
