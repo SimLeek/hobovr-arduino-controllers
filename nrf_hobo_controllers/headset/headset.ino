@@ -58,7 +58,7 @@ void setup() {
   radio.begin();
   
   Serial.println("Radio setup complete.");
-  Serial.println(radio.get_status());
+  //Serial.println(radio.get_status());
   //radio.setPALevel(4); //3 is max
   /*radio.setAutoAck(false);*/
   //radio.setDataRate(RF24_1MBPS);
