@@ -14,6 +14,8 @@
  // "headset", and "all". Since we're receiving the left and right controllers, as a headset, 
  // we will be sending "all" data.
 const char* device_name = "all";  
+const int fps_limit=240;
+int time_prev;
 
 //radio
 RF24 radio(9,10);
@@ -35,6 +37,7 @@ float deltat;
 MPU9250 IMU(Wire, 0x68);
 int imu_status;
 
+
 //buttons
 // no buttons on the headset currently, but they could be used for digital IPD adjustment, position resetting, etc.
 
@@ -48,11 +51,12 @@ struct __attribute__((packed)) ControllerState {
 ControllerState left_controller_state, right_controller_state;
 
 void setup() {
+  time_prev = micros();
   //debug
   Serial.begin(1000000);
   printf_begin();
   while (!Serial) {}
-  Serial.println(device_name);
+  Serial.print(device_name);Serial.write("\t\r\n");
   
   //radio
   radio.begin();
@@ -90,6 +94,22 @@ void setup() {
  * LOOP *
  ********/
 void loop() {
+  if (Serial.available() > 0) {
+      switch(Serial.read()) { 
+      case 'q': 
+          Serial.print(device_name);Serial.write("\t\r\n");
+          break; 
+      default:
+          break;
+      }
+    }
+
+  //skip updating so Python side can catch up, and should then catch all controller updates as well as headset:
+  if(micros()-time_prev<1e6/fps_limit){
+    return; 
+  }
+  time_prev = micros();
+    
   //imu
   IMU.readSensor();
   ax = IMU.getAccelX_mss();
@@ -104,7 +124,7 @@ void loop() {
   temp = IMU.getTemperature_C();
   deltat = fusion.deltatUpdate();
   fusion.MadgwickUpdate(gx, gy, gz, ax, ay, az, mx, my, mz, deltat);
-  
+
   //radio
   uint8_t pipe_num;
   while ( radio.available(&pipe_num) )
@@ -126,7 +146,7 @@ void loop() {
               String(left_controller_state.stick_y) + ',' + 
               String(left_controller_state.trigger);
         Serial.print("Left Controller State:");//Serial.println(msg);*/
-        Serial.write("lc:");Serial.write((char*)&left_controller_state, sizeof(ControllerState));Serial.write("\n\r");
+        Serial.write("lc:");Serial.write((char*)&left_controller_state, sizeof(ControllerState));Serial.write("\t\r\n");
       }else if(pipe_num==2){
         radio.read( &right_controller_state, sizeof(ControllerState) );
         /*auto msg =  String(right_controller_state.qw, 6) + ',' + 
@@ -142,18 +162,18 @@ void loop() {
               String(right_controller_state.stick_y) + ',' + 
               String(right_controller_state.trigger);
         Serial.print("Right Controller State:");Serial.println(msg);*/
-        Serial.write("rc:");Serial.write((char*)&right_controller_state, sizeof(ControllerState));Serial.write("\n\r");
+        Serial.write("rc:");Serial.write((char*)&right_controller_state, sizeof(ControllerState));Serial.write("\t\r\n");
       }
     }
 
   //headset data
-  /*auto msg =  String(fusion.q0, 6) + ',' + 
+  auto msg =  String(fusion.q0, 6) + ',' + 
         String(fusion.q1, 6) + ',' + 
         String(fusion.q2, 6) + ',' + 
         String(fusion.q3, 6);
-  Serial.print("Headset State:");Serial.println(msg);*/
+  Serial.print("Headset State:");Serial.println(msg);
   Serial.write("hmd:");
   Serial.write((char*)&fusion.q0, sizeof(float));Serial.write((char*)&fusion.q1, sizeof(float));
   Serial.write((char*)&fusion.q2, sizeof(float));Serial.write((char*)&fusion.q3, sizeof(float));
-  Serial.write("\n\r");
+  Serial.write("\t\r\n");
 }

@@ -23,6 +23,8 @@ const uint64_t right_controller_listening_pipe = 0x3A3A3A3AC3LL;
 //imu
 SF fusion;
 MPU9250 IMU(Wire, 0x68);
+float gx, gy, gz, ax, ay, az, mx, my, mz, temp;
+float deltat;
 
 //buttons
 #define PIN_JOY_UP A1
@@ -100,8 +102,6 @@ void loop() {
   controller_state.trigger = analogRead(PIN_JOY_TRIGGER);
 
   //imu
-  float gx, gy, gz, ax, ay, az, mx, my, mz, temp;
-  float deltat;
   IMU.readSensor();
   ax = IMU.getAccelX_mss();
   ay = IMU.getAccelY_mss();
