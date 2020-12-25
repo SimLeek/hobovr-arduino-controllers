@@ -93,11 +93,11 @@ void setup() {
 void loop() {
   //buttons
   ControllerState controller_state;
-  controller_state.stick_click = digitalRead(PIN_JOY_PRESS);
-  controller_state.grip = digitalRead(PIN_BUTTON_GRIP);
-  controller_state.util = digitalRead(PIN_BUTTON_UTIL);
-  controller_state.sys = digitalRead(PIN_BUTTON_SYS);
-  controller_state.menu = digitalRead(PIN_BUTTON_MENU);
+  controller_state.stick_click = 1-digitalRead(PIN_JOY_PRESS);
+  controller_state.grip = 1-digitalRead(PIN_BUTTON_GRIP);
+  controller_state.util = 1-digitalRead(PIN_BUTTON_UTIL);
+  controller_state.sys = 1-digitalRead(PIN_BUTTON_SYS);
+  controller_state.menu = 1-digitalRead(PIN_BUTTON_MENU);
   controller_state.stick_x = analogRead(PIN_JOY_UP);
   controller_state.stick_y = analogRead(PIN_JOY_LEFT);
   controller_state.trigger = analogRead(PIN_JOY_TRIGGER);
