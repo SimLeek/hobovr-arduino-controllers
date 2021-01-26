@@ -32,14 +32,14 @@ void dmpDataReady() {
 }
 
 // hobo_vr communication
-float to_be_sent[13] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // [w, x, y, z, trgr, padx, pady, pad_clk, trgr_clk, sys, menu, grip, util]
+float to_be_sent[19] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // [w, x, y, z, ax, ay, az, gx, gy, gz, trgr, padx, pady, pad_clk, trgr_clk, sys, menu, grip, util]
 // ^^^ le paket
 
 void setup() {
 
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
-        Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
+        Wire.setClock(1000000); // 1mHz I2C clock. change this to 400kHz if you have mpu comunication issues
     #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
     #endif
@@ -61,13 +61,13 @@ void setup() {
     // ==================================
     // supply your own gyro offsets here:
     // ==================================
-    // follow procedure here to calibrate offsets https://github.com/kkpoon/CalibrateMPU6050
-    mpu.setXGyroOffset(65);
-    mpu.setYGyroOffset(-19);
-    mpu.setZGyroOffset(23);
-    mpu.setZAccelOffset(1609);
-    mpu.setXAccelOffset(-649);
-    mpu.setYAccelOffset(-1609);
+    // follow procedure here to calibrate offsets in the i2cdevlib's calibration examples
+    mpu.setXGyroOffset(106);
+    mpu.setYGyroOffset(5);
+    mpu.setZGyroOffset(43);
+    mpu.setZAccelOffset(908);
+    mpu.setXAccelOffset(-3960);
+    mpu.setYAccelOffset(2373);
 
     // devStatus if everything worked properly
     if (devStatus == 0) {
@@ -120,21 +120,33 @@ void loop() {
         to_be_sent[1] = q.x;
         to_be_sent[2] = q.y;
         to_be_sent[3] = q.z;
-
-        //controller inputs
-        to_be_sent[4] = !digitalRead(3); //trigger
-        to_be_sent[5] = analogRead(A2); //pad x
-        to_be_sent[6] = analogRead(A1); //pad y
-        to_be_sent[7] = !digitalRead(9); //pad click
-        // no trigger click :(
-        to_be_sent[9] = !digitalRead(7); //sys
-        to_be_sent[10] = !digitalRead(8); //menu
-        to_be_sent[11] = !digitalRead(4); //grip
-        to_be_sent[12] = !digitalRead(5); //util
-
-
-        // send the packet
-        Serial.write((char*)to_be_sent, sizeof(float)*13);
-        Serial.write("\t\r\n");
     }
+    int16_t ax, ay, az, gx, gy, gz;
+    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+    // raw accel and gyro readings
+    // accel readings converted to g
+    to_be_sent[4] = (float)ax/16384;
+    to_be_sent[5] = (float)ay/16384;
+    to_be_sent[6] = (float)az/16384;
+    // gyro readings converted to degrees/second
+    to_be_sent[7] = (float)gx/131;
+    to_be_sent[8] = (float)gy/131;
+    to_be_sent[9] = (float)gz/131;
+
+    //controller inputs
+    to_be_sent[10] = !digitalRead(3); //trigger
+    to_be_sent[11] = analogRead(A2); //pad x
+    to_be_sent[12] = analogRead(A1); //pad y
+    to_be_sent[13] = !digitalRead(9); //pad click
+    // no trigger click :(
+    to_be_sent[15] = !digitalRead(7); //sys
+    to_be_sent[16] = !digitalRead(8); //menu
+    to_be_sent[17] = !digitalRead(4); //grip
+    to_be_sent[18] = !digitalRead(5); //util
+
+
+    // send the packet
+    Serial.write((char*)to_be_sent, sizeof(float)*19);
+    Serial.write("\t\r\n");
 }
